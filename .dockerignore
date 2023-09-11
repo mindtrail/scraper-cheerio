@@ -8,3 +8,4 @@ storage
 
 # installed files
 node_modules
+npm-debug.log
