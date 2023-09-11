@@ -24,11 +24,11 @@ RUN apt-get install brave-browser -y
 
 RUN PUPPETEER_SKIP_DOWNLOAD=true
 
-COPY . ./
+COPY . ./scraper
 
-RUN npm install
+RUN cd ./scraper && npm install
 
 # EXPOSE 3000
 
 # Run the image.
-CMD npm run start
+CMD cd ./scraper && npm run start
