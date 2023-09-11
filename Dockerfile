@@ -26,9 +26,11 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY . ./scraper
 
-RUN cd ./scraper && npm install
+WORKDIR /scraper
 
-# EXPOSE 3000
+RUN npm install
+
+EXPOSE 8080
 
 # Run the image.
-CMD cd ./scraper && npm run start
+CMD npm run start

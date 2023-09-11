@@ -6,6 +6,7 @@ const config = new Configuration({
   disableBrowserSandbox: true,
   defaultRequestQueueId: generateRandomID(10),
   persistStateIntervalMillis: 1000 * 5, // 5 seconds
+  availableMemoryRatio: 0.75,
 })
 
 const launchOptions = {
@@ -40,8 +41,6 @@ const crawler = new PlaywrightCrawler(
   },
   config,
 )
-
-console.time('Crawl')
 
 const listOfUrls = await downloadListOfUrls({
   url: 'https://www.fuer-gruender.de/sitemap.xml',
