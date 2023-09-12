@@ -22,7 +22,7 @@ RUN apt-get install brave-browser -y
 # Install Node.js LTS version (18.x)
 # RUN nvm install --lts
 
-RUN PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /scraper
 
