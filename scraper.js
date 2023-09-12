@@ -1,5 +1,15 @@
 import os from 'os'
+import dotenv from 'dotenv'
+import { Storage } from '@google-cloud/storage'
 import { PlaywrightCrawler, Configuration, downloadListOfUrls } from 'crawlee'
+
+dotenv.config()
+
+const projectId = process.env.GCLOUD_PROJECT_ID
+const bucketName = process.env.GCLOUD_STORAGE_BUCKET
+
+const storage = new Storage({ projectId })
+const bucket = storage.bucket(bucketName)
 
 export async function fetchLinks(url) {
   const domainName = extractDomain(url)
@@ -12,7 +22,7 @@ export async function fetchLinks(url) {
 }
 
 export async function scrapeWebsite(url, limit) {
-  const reqLimit = parseInt(limit) || 20
+  const reqLimit = parseInt(limit) || 10
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -45,6 +55,16 @@ export async function scrapeWebsite(url, limit) {
 
         const pageContent = await page.content()
         log.info(`Title of ${request.loadedUrl} is '${title}'`)
+
+        // replace empty spaces and backslashes
+        const fileName = removeHttp(url) + '/' + title.replace(/\s+|\//g, '-')
+        const newFile = bucket.file(fileName)
+
+        await newFile.save(fileName, {
+          metadata: {
+            contentType: 'text/html',
+          },
+        })
 
         await enqueueLinks({
           limit: 30,
@@ -106,4 +126,8 @@ function extractDomain(url) {
   } else {
     return null
   }
+}
+
+function removeHttp(url) {
+  return url.replace(/^https?:\/\//, '')
 }

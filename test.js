@@ -1,5 +1,5 @@
 import { scrapeWebsite } from './scraper.js'
 
-const website = 'https://teleporthq.io'
-const limit = 200
+const website = 'https://webflow.com'
+const limit = 10
 scrapeWebsite(website, limit)
