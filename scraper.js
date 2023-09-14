@@ -60,7 +60,7 @@ export async function scrapeWebsite(url, limit) {
         const fileName = removeHttp(url) + '/' + title.replace(/\s+|\//g, '-')
         const newFile = bucket.file(fileName)
 
-        await newFile.save(fileName, {
+        await newFile.save(pageContent, {
           metadata: {
             contentType: 'text/html',
           },
