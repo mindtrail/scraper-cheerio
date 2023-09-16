@@ -34,7 +34,7 @@ export async function fetchLinks(url) {
 }
 
 export async function scrapeWebsite(urls, limit, dataStoreId) {
-  const reqLimit = parseInt(limit) || 10
+  const reqLimit = parseInt(limit) || 15
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -73,10 +73,11 @@ export async function scrapeWebsite(urls, limit, dataStoreId) {
         const fileName = `${dataStoreId}/${hostname}/${pathname}`
         const newFile = bucket.file(fileName)
 
-        await newFile.save(pageContent, {
+        await newFile.save(pageContent)
+        await newFile.setMetadata({
           metadata: {
             dataStoreId,
-            contentType: 'text/html',
+            hostname,
           },
         })
 
