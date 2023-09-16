@@ -10,6 +10,14 @@
     "express": "^4.18.2",
     "playwright": "^1.37.1"
   },
+  "nodemonConfig": {
+    "ignore": [
+      "**/test/**",
+      "**/docs/**",
+      "storage/**"
+    ],
+    "delay": 2500
+  },
   "scripts": {
     "start": "node server.js",
     "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1",

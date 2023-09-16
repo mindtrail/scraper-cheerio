@@ -10,15 +10,43 @@ const app = express()
 
 app.get('/', async (req, res) => {
   // Get req params
-  const { url, limit } = req.query
-  console.log(url)
+  const { urls, limit, dataStoreId } = req.query
 
+  const urlsToScrape = typeof urls === 'string' ? [urls] : urls
+
+  console.log(1112222, urlsToScrape)
   // if valid url -> otherwise add https://
-  if (url) {
-    const result = await scrapeWebsite(url, limit)
+  if (!urlsToScrape?.length) {
+    // 400 Bad Request
+    return res.status(400).json({
+      message: 'Missing url query parameter',
+    })
   }
 
-  res.send('Hello World - ' + url)
+  const result = await scrapeWebsite(urlsToScrape, limit, dataStoreId)
+  res.json({
+    message: `Scraped ${urlsToScrape}`,
+    data: result,
+  })
+})
+
+app.get('/links', async (req, res) => {
+  // Get req params
+  const { url } = req.query
+
+  // if valid url -> otherwise add https://
+  if (!url) {
+    // 400 Bad Request
+    return res.status(400).json({
+      message: 'Missing url query parameter',
+    })
+  }
+
+  const result = await fetchLinks(url)
+  res.json({
+    message: `Fetched links from ${url}`,
+    data: result,
+  })
 })
 
 app.listen(PORT, () => {

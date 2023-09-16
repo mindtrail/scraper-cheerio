@@ -11,6 +11,18 @@ const bucketName = process.env.GCLOUD_STORAGE_BUCKET
 const storage = new Storage({ projectId })
 const bucket = storage.bucket(bucketName)
 
+// /sitemap-index.xml
+// /sitemap.php
+// /sitemap.txt
+// /sitemap.xml.gz
+// /sitemap/
+// /sitemap/sitemap.xml
+// /sitemapindex.xml
+// /sitemap/index.xml
+// /sitemap1.xml
+// /sitemap_index.xml
+// /sitemap.xml
+
 export async function fetchLinks(url) {
   const domainName = extractDomain(url)
   const links = (await downloadListOfUrls({ url })).filter((link) =>
@@ -21,7 +33,7 @@ export async function fetchLinks(url) {
   return links
 }
 
-export async function scrapeWebsite(url, limit) {
+export async function scrapeWebsite(urls, limit, dataStoreId) {
   const reqLimit = parseInt(limit) || 10
 
   const config = new Configuration({
@@ -50,18 +62,20 @@ export async function scrapeWebsite(url, limit) {
 
       maxRequestsPerCrawl: reqLimit,
       // Use the requestHandler to process each of the crawled pages.
-      requestHandler: async ({ request, page, enqueueLinks, log }) => {
-        const title = await page.title()
-
+      requestHandler: async ({ request, page, enqueueLinks }) => {
         const pageContent = await page.content()
-        log.info(`Title of ${request.loadedUrl} is '${title}'`)
 
-        // replace empty spaces and backslashes
-        const fileName = removeHttp(url) + '/' + title.replace(/\s+|\//g, '-')
+        const url = new URL(request.url)
+        const hostname = url.hostname
+        const pathname =
+          url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
+
+        const fileName = `${dataStoreId}/${hostname}/${pathname}`
         const newFile = bucket.file(fileName)
 
         await newFile.save(pageContent, {
           metadata: {
+            dataStoreId,
             contentType: 'text/html',
           },
         })
@@ -75,9 +89,8 @@ export async function scrapeWebsite(url, limit) {
     config,
   )
 
-  const listOfUrls = [url]
-  console.log(listOfUrls)
-  await crawler.addRequests(listOfUrls)
+  console.log(urls)
+  await crawler.addRequests(urls)
 
   // Add first URL to the queue and start the crawl.
   console.time('Crawl')
@@ -85,7 +98,7 @@ export async function scrapeWebsite(url, limit) {
   await crawler.requestQueue.drop()
   console.timeEnd('Crawl')
 
-  console.log(res)
+  return res
 }
 
 function generateRandomID(length) {
