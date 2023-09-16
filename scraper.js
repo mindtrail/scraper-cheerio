@@ -33,8 +33,8 @@ export async function fetchLinks(url) {
   return links
 }
 
-export async function scrapeWebsite(urls, limit, dataStoreId) {
-  const reqLimit = parseInt(limit) || 15
+export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
+  const reqLimit = parseInt(limit) || 99999
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -76,8 +76,9 @@ export async function scrapeWebsite(urls, limit, dataStoreId) {
         await newFile.save(pageContent)
         await newFile.setMetadata({
           metadata: {
-            dataStoreId,
             hostname,
+            userId,
+            dataStoreId,
           },
         })
 
