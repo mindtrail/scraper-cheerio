@@ -27,7 +27,6 @@ app.get('/', async (req, res) => {
 
   const urlsToScrape = typeof urls === 'string' ? [urls] : urls
 
-  console.log(1112222, urlsToScrape)
   // if valid url -> otherwise add https://
   if (!urlsToScrape?.length) {
     // 400 Bad Request
@@ -47,7 +46,7 @@ app.get('/', async (req, res) => {
   await db
     .collection(WEBSITES_COLLECTION)
     .doc(dataStoreId)
-    .set({ ...payload, result })
+    .set({ ...payload, result, created: new Date(), status: 'synched' })
 
   res.json({
     message: `Scraped ${urlsToScrape}`,
