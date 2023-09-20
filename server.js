@@ -8,6 +8,9 @@ import { scrapeWebsite, fetchLinks } from './scraper.js'
 const PORT = 80
 const WEBSITES_COLLECTION = 'scraped-websites'
 
+const EMBEDDING_ENDPOINT = process.env.EMBEDDING_ENDPOINT
+const EMBEDDING_SECRET = process.env.EMBEDDING_SECRET
+
 // App
 const app = express()
 initializeApp({
@@ -46,6 +49,16 @@ app.get('/', async (req, res) => {
     .collection(WEBSITES_COLLECTION)
     .doc(dataStoreId)
     .set({ ...payload, result, created: new Date(), status: 'synched' })
+
+  // Make a call to the main APP endpoint to start the embedding process
+  await fetch(EMBEDDING_ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Custom-Secret': EMBEDDING_SECRET, // Custom header
+    },
+  })
 })
 
 app.get('/links', async (req, res) => {

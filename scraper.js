@@ -13,7 +13,7 @@ export async function fetchLinks(url) {
 }
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
-  const reqLimit = parseInt(limit) || 9
+  const reqLimit = parseInt(limit) || 9999
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
