@@ -44,6 +44,7 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
       requestHandler: async ({ request, page, enqueueLinks }) => {
         const pageContent = await page.content()
 
+        console.log('---', page.requestUrl)
         // Store the page content to GCS
         await storeToGCS({
           pageContent,
