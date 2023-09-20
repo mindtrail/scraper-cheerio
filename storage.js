@@ -1,5 +1,5 @@
-import dotenv from 'dotenv'
 import { Storage } from '@google-cloud/storage'
+import dotenv from 'dotenv'
 
 dotenv.config()
 
@@ -14,7 +14,12 @@ export async function storeToGCS(props) {
 
   const url = new URL(requestUrl)
   const hostname = url.hostname
-  const pathname = url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
+  let pathname = url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
+  pathname = pathname.endsWith('-') ? pathname.slice(0, -1) : pathname
+
+  if (!hostname) {
+    return
+  }
 
   const fileName = `${userId}/${dataStoreId}/${hostname}/${pathname}`
   const newFile = bucket.file(fileName)
@@ -22,6 +27,7 @@ export async function storeToGCS(props) {
   try {
     await newFile.save(pageContent)
     await newFile.setMetadata({
+      contentType: 'text/html',
       metadata: {
         hostname,
         userId,

@@ -1,23 +1,22 @@
 import express from 'express'
-import { initializeApp, applicationDefault, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import dotenv from 'dotenv'
 
 import { scrapeWebsite, fetchLinks } from './scraper.js'
 
-// Constants
-const PORT = 80
-const WEBSITES_COLLECTION = 'scraped-websites'
+dotenv.config()
 
-const EMBEDDING_ENDPOINT = process.env.EMBEDDING_ENDPOINT
+const env = process.env.NODE_ENV
+
+const PORT = 80
 const EMBEDDING_SECRET = process.env.EMBEDDING_SECRET
+
+const EMBEDDING_ENDPOINT =
+  env === 'development'
+    ? process.env.LOCAL_EMBEDDING_ENDPOINT
+    : process.env.EMBEDDING_ENDPOINT
 
 // App
 const app = express()
-initializeApp({
-  credential: applicationDefault(),
-})
-
-const db = getFirestore()
 
 app.get('/', async (req, res) => {
   // Get req params
@@ -43,15 +42,9 @@ app.get('/', async (req, res) => {
     message: `Scraping started on ${urlsToScrape}`,
   })
 
-  const result = await scrapeWebsite(payload)
+  await scrapeWebsite(payload)
 
-  await db
-    .collection(WEBSITES_COLLECTION)
-    .doc(dataStoreId)
-    .set({ ...payload, result, created: new Date(), status: 'synched' })
-
-  // Make a call to the main APP endpoint to start the embedding process
-  await fetch(EMBEDDING_ENDPOINT, {
+  const result = await fetch(EMBEDDING_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify(payload),
     headers: {
@@ -59,6 +52,8 @@ app.get('/', async (req, res) => {
       'X-Custom-Secret': EMBEDDING_SECRET, // Custom header
     },
   })
+
+  console.log('Embed API call - App Chat', await result.json())
 })
 
 app.get('/links', async (req, res) => {

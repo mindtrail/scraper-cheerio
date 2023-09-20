@@ -8,12 +8,12 @@ export async function fetchLinks(url) {
     link.includes(domainName),
   )
 
-  console.log(links)
+  console.log('URLS TO SCRAPE -- ', links)
   return links
 }
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
-  const reqLimit = parseInt(limit) || 9999
+  const reqLimit = parseInt(limit) || 15
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -52,9 +52,7 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
           requestUrl: request.url,
         })
 
-        await enqueueLinks({
-          limit: 30,
-        })
+        await enqueueLinks()
         return pageContent
       },
     },
@@ -84,21 +82,6 @@ function generateRandomID(length) {
   return result
 }
 
-function extractHostname(url) {
-  // The regular expression to match the hostname in a URL
-  const regex = /^(?:https?:\/\/)?(?:www\.)?([^\/]+)/i
-
-  // Executing the regex on the given URL
-  const match = url.match(regex)
-
-  // Extracting the match if it exists
-  if (match && match[1]) {
-    return match[1]
-  } else {
-    return null
-  }
-}
-
 function extractDomain(url) {
   const regex =
     /^(?:https?:\/\/)?(?:www\.)?((?:[^\.\/]+\.)*([^\/\.]{2,}\.\w+))/i
@@ -110,10 +93,6 @@ function extractDomain(url) {
   } else {
     return null
   }
-}
-
-function removeHttp(url) {
-  return url.replace(/^https?:\/\//, '')
 }
 
 // Sitemap possible locations
