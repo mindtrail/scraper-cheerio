@@ -1,27 +1,6 @@
 import os from 'os'
-import dotenv from 'dotenv'
-import { Storage } from '@google-cloud/storage'
 import { PlaywrightCrawler, Configuration, downloadListOfUrls } from 'crawlee'
-
-dotenv.config()
-
-const projectId = process.env.GCLOUD_PROJECT_ID
-const bucketName = process.env.GCLOUD_STORAGE_BUCKET
-
-const storage = new Storage({ projectId })
-const bucket = storage.bucket(bucketName)
-
-// /sitemap-index.xml
-// /sitemap.php
-// /sitemap.txt
-// /sitemap.xml.gz
-// /sitemap/
-// /sitemap/sitemap.xml
-// /sitemapindex.xml
-// /sitemap/index.xml
-// /sitemap1.xml
-// /sitemap_index.xml
-// /sitemap.xml
+import { storeToGCS } from './storage.js'
 
 export async function fetchLinks(url) {
   const domainName = extractDomain(url)
@@ -34,7 +13,7 @@ export async function fetchLinks(url) {
 }
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
-  const reqLimit = parseInt(limit) || 99999
+  const reqLimit = parseInt(limit) || 9
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -65,21 +44,12 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
       requestHandler: async ({ request, page, enqueueLinks }) => {
         const pageContent = await page.content()
 
-        const url = new URL(request.url)
-        const hostname = url.hostname
-        const pathname =
-          url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
-
-        const fileName = `${dataStoreId}/${hostname}/${pathname}`
-        const newFile = bucket.file(fileName)
-
-        await newFile.save(pageContent)
-        await newFile.setMetadata({
-          metadata: {
-            hostname,
-            userId,
-            dataStoreId,
-          },
+        // Store the page content to GCS
+        await storeToGCS({
+          pageContent,
+          userId,
+          dataStoreId,
+          requestUrl: request.url,
         })
 
         await enqueueLinks({
@@ -91,7 +61,6 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
     config,
   )
 
-  console.log(urls)
   await crawler.addRequests(urls)
 
   // Add first URL to the queue and start the crawl.
@@ -146,3 +115,16 @@ function extractDomain(url) {
 function removeHttp(url) {
   return url.replace(/^https?:\/\//, '')
 }
+
+// Sitemap possible locations
+// /sitemap-index.xml
+// /sitemap.php
+// /sitemap.txt
+// /sitemap.xml.gz
+// /sitemap/
+// /sitemap/sitemap.xml
+// /sitemapindex.xml
+// /sitemap/index.xml
+// /sitemap1.xml
+// /sitemap_index.xml
+// /sitemap.xml

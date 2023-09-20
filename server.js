@@ -1,11 +1,6 @@
 import express from 'express'
 import { initializeApp, applicationDefault, cert } from 'firebase-admin/app'
-import {
-  getFirestore,
-  Timestamp,
-  FieldValue,
-  Filter,
-} from 'firebase-admin/firestore'
+import { getFirestore } from 'firebase-admin/firestore'
 
 import { scrapeWebsite, fetchLinks } from './scraper.js'
 
@@ -24,7 +19,6 @@ const db = getFirestore()
 app.get('/', async (req, res) => {
   // Get req params
   const { urls, limit, dataStoreId, userId } = req.query
-
   const urlsToScrape = typeof urls === 'string' ? [urls] : urls
 
   // if valid url -> otherwise add https://
@@ -42,16 +36,16 @@ app.get('/', async (req, res) => {
     userId,
   }
 
+  res.json({
+    message: `Scraping started on ${urlsToScrape}`,
+  })
+
   const result = await scrapeWebsite(payload)
+
   await db
     .collection(WEBSITES_COLLECTION)
     .doc(dataStoreId)
     .set({ ...payload, result, created: new Date(), status: 'synched' })
-
-  res.json({
-    message: `Scraped ${urlsToScrape}`,
-    data: result,
-  })
 })
 
 app.get('/links', async (req, res) => {
