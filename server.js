@@ -1,68 +1,40 @@
 import express from 'express'
 import dotenv from 'dotenv'
+import bodyParser from 'body-parser'
 
 import { scrapeWebsite, fetchLinks } from './scraper.js'
 
 dotenv.config()
 
-const env = process.env.NODE_ENV
-
 const PORT = 80
-const EMBEDDING_SECRET = process.env.EMBEDDING_SECRET
-
-const EMBEDDING_ENDPOINT =
-  env === 'development'
-    ? process.env.LOCAL_EMBEDDING_ENDPOINT
-    : process.env.EMBEDDING_ENDPOINT
-
-// App
 const app = express()
+app.use(bodyParser.json())
 
-app.get('/', async (req, res) => {
-  // Get req params
-  const { urls, limit, dataStoreId, userId } = req.query
-  const urlsToScrape = typeof urls === 'string' ? [urls] : urls
+app.post('/', async (req, res) => {
+  const payload = await req.body
+  const { urls } = payload
 
-  // if valid url -> otherwise add https://
-  if (!urlsToScrape?.length) {
-    // 400 Bad Request
+  console.log('Payload', payload)
+
+  if (!urls?.length) {
+    console.log('Missing urls', urls)
     return res.status(400).json({
-      message: 'Missing url query parameter',
+      message: 'Missing urls',
     })
   }
 
-  const payload = {
-    urls: urlsToScrape,
-    limit,
-    dataStoreId,
-    userId,
-  }
-
   res.json({
-    message: `Scraping started on ${urlsToScrape}`,
+    message: `Scraping started on: ${urls}`,
   })
 
   await scrapeWebsite(payload)
-
-  const result = await fetch(EMBEDDING_ENDPOINT, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Custom-Secret': EMBEDDING_SECRET, // Custom header
-    },
-  })
-
-  console.log('Embed API call - App Chat', await result.json())
 })
 
 app.get('/links', async (req, res) => {
   // Get req params
   const { url } = req.query
 
-  // if valid url -> otherwise add https://
   if (!url) {
-    // 400 Bad Request
     return res.status(400).json({
       message: 'Missing url query parameter',
     })
@@ -73,8 +45,6 @@ app.get('/links', async (req, res) => {
     message: `Fetched links from ${url}`,
     data: result,
   })
-
-  // Add the collection to the database
 })
 
 app.listen(PORT, () => {

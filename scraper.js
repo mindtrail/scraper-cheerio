@@ -8,12 +8,11 @@ export async function fetchLinks(url) {
     link.includes(domainName),
   )
 
-  console.log('URLS TO SCRAPE -- ', links)
   return links
 }
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
-  const reqLimit = parseInt(limit) || 15
+  const reqLimit = parseInt(limit) || 10
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -44,7 +43,7 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
       requestHandler: async ({ request, page, enqueueLinks }) => {
         const pageContent = await page.content()
 
-        console.log('---', page.requestUrl)
+        console.log('--->', request.url)
         // Store the page content to GCS
         await storeToGCS({
           pageContent,
@@ -63,10 +62,10 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   await crawler.addRequests(urls)
 
   // Add first URL to the queue and start the crawl.
-  console.time('Crawl')
+  console.time('Crawl duration')
   const res = await crawler.run()
   await crawler.requestQueue.drop()
-  console.timeEnd('Crawl')
+  console.timeEnd('Crawl duration')
 
   return res
 }
