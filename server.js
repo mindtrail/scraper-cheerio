@@ -48,5 +48,6 @@ app.get('/links', async (req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`Running on http://localhost:${PORT}`)
+  // get actual app url
+  console.log(`Running on port:${PORT}`)
 })

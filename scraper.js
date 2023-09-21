@@ -1,6 +1,7 @@
 import os from 'os'
 import { PlaywrightCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
+import { url } from 'inspector'
 
 export async function fetchLinks(url) {
   const domainName = extractDomain(url)
@@ -67,10 +68,10 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   await crawler.addRequests(urls)
 
   // Add first URL to the queue and start the crawl.
-  console.time('Crawl duration')
+  console.time(`Crawl duration ${urls.join('&')}`)
   const res = await crawler.run()
   await crawler.requestQueue.drop()
-  console.timeEnd('Crawl duration')
+  console.timeEnd(`Crawl duration ${urls.join('&')}`)
 
   return res
 }
