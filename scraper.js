@@ -13,6 +13,7 @@ export async function fetchLinks(url) {
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   const reqLimit = parseInt(limit) || 10
+  let scrapingIndex = 0
 
   const config = new Configuration({
     // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
@@ -41,9 +42,13 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
       maxRequestsPerCrawl: reqLimit,
       // Use the requestHandler to process each of the crawled pages.
       requestHandler: async ({ request, page, enqueueLinks }) => {
+        scrapingIndex++
         const pageContent = await page.content()
 
-        console.log('--->', request.url)
+        if (scrapingIndex % 10 === 0) {
+          console.log('--->', request.url)
+        }
+
         // Store the page content to GCS
         await storeToGCS({
           pageContent,
