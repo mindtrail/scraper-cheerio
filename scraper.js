@@ -1,7 +1,13 @@
 import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
 
-export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
+export async function scrapeWebsite({
+  urls,
+  limit,
+  dataStoreId,
+  userId,
+  autoDetectSitemap = true,
+}) {
   const reqLimit = parseInt(limit) || 9999
   let scrapingIndex = 0
 
@@ -25,7 +31,7 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
         }
         scrapingIndex++
 
-        if (scrapingIndex % 10 === 0) {
+        if (scrapingIndex % 20 === 0) {
           console.log('--->', requestUrl)
         }
 
@@ -51,9 +57,10 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
 
         // For sitemaps, we need to extract the links as the crawler doesn't enqueue them automatically
         if (requestUrl.includes('sitemap')) {
-          const sitemapLinks = await getSitemapLinks(requestUrl)
+          const sitemapLinks = await getLinksFromSitemap(requestUrl)
 
           if (sitemapLinks?.length) {
+            console.log('Sitemap links for ', requestUrl, sitemapLinks)
             await crawler.addRequests(sitemapLinks)
           }
         }
@@ -66,6 +73,11 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
 
   await crawler.addRequests(urls)
 
+  if (autoDetectSitemap) {
+    const sitemapLocations = getSitemapLocations(urls)
+    await crawler.addRequests(sitemapLocations)
+  }
+
   // Add first URL to the queue and start the crawl.
   console.time(`Crawl duration ${urls.join('&')}`)
   const res = await crawler.run()
@@ -75,12 +87,24 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   return res
 }
 
-async function getSitemapLinks(url) {
-  const hostname = new URL(url).hostname
+function getSitemapLocations(urls) {
+  const sitemapLocations = []
+  urls.forEach((url) => {
+    const { origin } = new URL(url)
+    SITEMAP_POSSIBLE_LOCATIONS.forEach((location) => {
+      sitemapLocations.push(`${origin}${location}`)
+    })
+  })
+
+  return sitemapLocations
+}
+
+async function getLinksFromSitemap(url) {
+  const { hostname } = new URL(url)
+
   const links = (await downloadListOfUrls({ url })).filter((link) =>
     link.includes(hostname),
   )
-
   return links
 }
 
@@ -108,14 +132,9 @@ export async function fetchLinks(url) {
 // Sitemap possible locations
 const SITEMAP_POSSIBLE_LOCATIONS = [
   '/sitemap.xml',
-  '/sitemap/',
   '/sitemap-index.xml',
   '/sitemap_index.xml',
-  '/sitemap/sitemap.xml',
   '/sitemapindex.xml',
   '/sitemap/index.xml',
-  '/sitemap1.xml',
-  '/sitemap.xml.gz',
-  '/sitemap.php',
-  '/sitemap.txt',
+  '/sitemap/sitemap.xml',
 ]
