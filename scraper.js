@@ -1,24 +1,14 @@
-import os from 'os'
 import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
-
-export async function fetchLinks(url) {
-  const domainName = extractDomain(url)
-  const links = (await downloadListOfUrls({ url })).filter((link) =>
-    link.includes(domainName),
-  )
-
-  return links
-}
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   const reqLimit = parseInt(limit) || 9999
   let scrapingIndex = 0
 
   const config = new Configuration({
-    // MOST IMPORTANT THING FOR RUNNING ON AWS LAMBDA / EC2 / FARGATE (Docker)
+    // IMPORTANT for running on AWS / EC2 / Gcloud... etc
     disableBrowserSandbox: true,
-    defaultRequestQueueId: generateRandomID(10),
+    defaultRequestQueueId: generateRandomID(10), // Add a new queue avoid conflicts
     persistStateIntervalMillis: 1000 * 5, // 5 seconds
     availableMemoryRatio: 0.85,
   })
@@ -26,28 +16,48 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   const crawler = new CheerioCrawler(
     {
       maxRequestsPerCrawl: reqLimit,
-      // Use the requestHandler to process each of the crawled pages.
-      requestHandler: async ({ request, $, enqueueLinks }) => {
+      requestHandler: async ({ crawler, request, $, enqueueLinks }) => {
+        const { url: requestUrl } = request
+
+        // Even if the crawler reaches the reqeust limit, it still processes queued request.
+        if (scrapingIndex > reqLimit) {
+          return
+        }
         scrapingIndex++
+
+        if (scrapingIndex % 10 === 0) {
+          console.log('--->', requestUrl)
+        }
+
         const pageTitle = $('title').text()
         const metaDescription = $('meta[name="description"]').attr('content')
 
         const content = $('html').html()
 
-        await storeToGCS({
-          content,
-          userId,
-          dataStoreId,
-          requestUrl: request.url,
-          pageTitle,
-          metaDescription,
-        })
-
-        if (scrapingIndex % 10 === 0) {
-          console.log('--->', request.url)
+        if (content) {
+          await storeToGCS({
+            content,
+            userId,
+            dataStoreId,
+            requestUrl,
+            pageTitle,
+            metaDescription,
+          })
         }
 
-        await enqueueLinks()
+        await enqueueLinks({
+          strategy: 'same-domain',
+        })
+
+        // For sitemaps, we need to extract the links as the crawler doesn't enqueue them automatically
+        if (requestUrl.includes('sitemap')) {
+          const sitemapLinks = await getSitemapLinks(requestUrl)
+
+          if (sitemapLinks?.length) {
+            await crawler.addRequests(sitemapLinks)
+          }
+        }
+
         return content
       },
     },
@@ -65,6 +75,15 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
   return res
 }
 
+async function getSitemapLinks(url) {
+  const hostname = new URL(url).hostname
+  const links = (await downloadListOfUrls({ url })).filter((link) =>
+    link.includes(hostname),
+  )
+
+  return links
+}
+
 function generateRandomID(length) {
   const characters = '0123456789'
   let result = ''
@@ -77,28 +96,26 @@ function generateRandomID(length) {
   return result
 }
 
-function extractDomain(url) {
-  const regex =
-    /^(?:https?:\/\/)?(?:www\.)?((?:[^\.\/]+\.)*([^\/\.]{2,}\.\w+))/i
+export async function fetchLinks(url) {
+  const hostname = new URL(url).hostname
+  const links = (await downloadListOfUrls({ url })).filter((link) =>
+    link.includes(hostname),
+  )
 
-  const match = url.match(regex)
-
-  if (match && match[2]) {
-    return match[2]
-  } else {
-    return null
-  }
+  return links
 }
 
 // Sitemap possible locations
-// /sitemap-index.xml
-// /sitemap.php
-// /sitemap.txt
-// /sitemap.xml.gz
-// /sitemap/
-// /sitemap/sitemap.xml
-// /sitemapindex.xml
-// /sitemap/index.xml
-// /sitemap1.xml
-// /sitemap_index.xml
-// /sitemap.xml
+const SITEMAP_POSSIBLE_LOCATIONS = [
+  '/sitemap.xml',
+  '/sitemap/',
+  '/sitemap-index.xml',
+  '/sitemap_index.xml',
+  '/sitemap/sitemap.xml',
+  '/sitemapindex.xml',
+  '/sitemap/index.xml',
+  '/sitemap1.xml',
+  '/sitemap.xml.gz',
+  '/sitemap.php',
+  '/sitemap.txt',
+]
