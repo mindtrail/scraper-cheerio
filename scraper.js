@@ -1,7 +1,6 @@
 import os from 'os'
-import { PlaywrightCrawler, Configuration, downloadListOfUrls } from 'crawlee'
+import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
-import { url } from 'inspector'
 
 export async function fetchLinks(url) {
   const domainName = extractDomain(url)
@@ -24,42 +23,32 @@ export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
     availableMemoryRatio: 0.85,
   })
 
-  const launchOptions = {
-    headless: true,
-    ignoreHTTPSErrors: true,
-  }
-
-  // If it's the EC2 Env... it's a quick fix for easier debugging
-  if (os.platform() === 'linux') {
-    launchOptions.executablePath = '/usr/bin/brave-browser' // /usr/bin/brave-browser
-  }
-
-  const crawler = new PlaywrightCrawler(
+  const crawler = new CheerioCrawler(
     {
-      launchContext: {
-        launchOptions,
-      },
-
       maxRequestsPerCrawl: reqLimit,
       // Use the requestHandler to process each of the crawled pages.
-      requestHandler: async ({ request, page, enqueueLinks }) => {
+      requestHandler: async ({ request, $, enqueueLinks }) => {
         scrapingIndex++
-        const pageContent = await page.content()
+        const pageTitle = $('title').text()
+        const metaDescription = $('meta[name="description"]').attr('content')
+
+        const content = $('html').html()
+
+        await storeToGCS({
+          content,
+          userId,
+          dataStoreId,
+          requestUrl: request.url,
+          pageTitle,
+          metaDescription,
+        })
 
         if (scrapingIndex % 10 === 0) {
           console.log('--->', request.url)
         }
 
-        // Store the page content to GCS
-        await storeToGCS({
-          pageContent,
-          userId,
-          dataStoreId,
-          requestUrl: request.url,
-        })
-
         await enqueueLinks()
-        return pageContent
+        return content
       },
     },
     config,

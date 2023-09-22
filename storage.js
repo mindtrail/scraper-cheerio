@@ -10,7 +10,7 @@ const storage = new Storage()
 const bucket = storage.bucket(bucketName)
 
 export async function storeToGCS(props) {
-  const { pageContent, userId, dataStoreId, requestUrl } = props
+  const { content, userId, dataStoreId, requestUrl, ...rest } = props
 
   const url = new URL(requestUrl)
   const hostname = url.hostname
@@ -25,13 +25,14 @@ export async function storeToGCS(props) {
   const newFile = bucket.file(fileName)
 
   try {
-    await newFile.save(pageContent)
+    await newFile.save(content)
     await newFile.setMetadata({
       contentType: 'text/html',
       metadata: {
         hostname,
         userId,
         dataStoreId,
+        ...rest,
       },
     })
   } catch (err) {
