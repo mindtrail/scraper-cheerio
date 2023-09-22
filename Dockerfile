@@ -1,11 +1,7 @@
 FROM node:20-alpine
-# RUN apt-get update
-    # && apt-get install -y
 
 # tree for debugging
-RUN apt-get update
-
-ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN apk update
 
 WORKDIR /scraper
 
