@@ -12,7 +12,7 @@ export async function fetchLinks(url) {
 }
 
 export async function scrapeWebsite({ urls, limit, dataStoreId, userId }) {
-  const reqLimit = parseInt(limit) || 10
+  const reqLimit = parseInt(limit) || 9999
   let scrapingIndex = 0
 
   const config = new Configuration({
