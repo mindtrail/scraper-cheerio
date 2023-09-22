@@ -60,7 +60,6 @@ export async function scrapeWebsite({
           const sitemapLinks = await getLinksFromSitemap(requestUrl)
 
           if (sitemapLinks?.length) {
-            console.log('Sitemap links for ', requestUrl, sitemapLinks)
             await crawler.addRequests(sitemapLinks)
           }
         }
