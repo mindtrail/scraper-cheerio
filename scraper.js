@@ -21,6 +21,7 @@ export async function scrapeWebsite({
 
   const crawler = new CheerioCrawler(
     {
+      maxRequestRetries: 1,
       maxRequestsPerCrawl: reqLimit,
       requestHandler: async ({ crawler, request, $, enqueueLinks }) => {
         const { url: requestUrl } = request
@@ -41,14 +42,14 @@ export async function scrapeWebsite({
         const content = $('html').html()
 
         if (content) {
-          // await storeToGCS({
-          //   content,
-          //   userId,
-          //   dataStoreId,
-          //   requestUrl,
-          //   pageTitle,
-          //   metaDescription,
-          // })
+          await storeToGCS({
+            content,
+            userId,
+            dataStoreId,
+            requestUrl,
+            pageTitle,
+            metaDescription,
+          })
         }
 
         await enqueueLinks({
