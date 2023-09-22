@@ -12,6 +12,10 @@ const bucket = storage.bucket(bucketName)
 export async function storeToGCS(props) {
   const { content, userId, dataStoreId, requestUrl, ...rest } = props
 
+  if (!content || !userId || !dataStoreId || !requestUrl) {
+    return
+  }
+
   const url = new URL(requestUrl)
   const hostname = url.hostname
   let pathname = url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
