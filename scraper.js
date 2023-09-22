@@ -41,14 +41,14 @@ export async function scrapeWebsite({
         const content = $('html').html()
 
         if (content) {
-          await storeToGCS({
-            content,
-            userId,
-            dataStoreId,
-            requestUrl,
-            pageTitle,
-            metaDescription,
-          })
+          // await storeToGCS({
+          //   content,
+          //   userId,
+          //   dataStoreId,
+          //   requestUrl,
+          //   pageTitle,
+          //   metaDescription,
+          // })
         }
 
         await enqueueLinks({
