@@ -16,6 +16,8 @@ export async function scrapeWebsite({
 
   const scrapingResult = {
     bucket: bucketName,
+    userId,
+    dataStoreId,
     files: [],
   }
 
