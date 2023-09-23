@@ -6,6 +6,11 @@ import { scrapeWebsite, fetchLinks } from './scraper.js'
 
 dotenv.config()
 
+const EMBEDI_API_URL =
+  process.env.NODE_ENV === 'development'
+    ? process.env.LOCAL_EMBEDDING_ENDPOINT
+    : process.env.EMBEDDING_ENDPOINT
+
 const PORT = 80
 const app = express()
 app.use(bodyParser.json())
@@ -27,7 +32,16 @@ app.post('/', async (req, res) => {
     message: `Scraping started on: ${urls}`,
   })
 
-  await scrapeWebsite(payload)
+  const scrapingResult = await scrapeWebsite(payload)
+
+  const response = await fetch(EMBEDI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Custom-Secret': process.env.EMBEDDING_SECRET,
+    },
+    body: JSON.stringify(scrapingResult),
+  })
 })
 
 app.get('/links', async (req, res) => {

@@ -2,6 +2,7 @@ import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
 
 const SITEMAP_DEFAULT_LOCATION = '/sitemap.xml'
+const bucketName = process.env.GCLOUD_STORAGE_BUCKET
 
 export async function scrapeWebsite({
   urls,
@@ -12,6 +13,11 @@ export async function scrapeWebsite({
 }) {
   const reqLimit = parseInt(limit) || 9999
   let scrapingIndex = 0
+
+  const scrapingResult = {
+    bucket: bucketName,
+    files: [],
+  }
 
   const config = new Configuration({
     // IMPORTANT for running on AWS / EC2 / Gcloud... etc
@@ -44,7 +50,7 @@ export async function scrapeWebsite({
         const content = $('html').html()
 
         if (content) {
-          await storeToGCS({
+          const fileName = await storeToGCS({
             content,
             userId,
             dataStoreId,
@@ -52,6 +58,8 @@ export async function scrapeWebsite({
             pageTitle,
             metaDescription,
           })
+
+          scrapingResult.files.push(fileName)
         }
 
         await enqueueLinks({
@@ -83,11 +91,11 @@ export async function scrapeWebsite({
 
   // Add first URL to the queue and start the crawl.
   console.time(`Crawl duration ${urls.join('&')}`)
-  const res = await crawler.run()
+  await crawler.run()
   await crawler.requestQueue.drop()
   console.timeEnd(`Crawl duration ${urls.join('&')}`)
 
-  return res
+  return scrapingResult
 }
 
 function getSitemapLocations(urls) {

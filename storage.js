@@ -39,6 +39,9 @@ export async function storeToGCS(props) {
         ...rest,
       },
     })
+
+    // We return the file name to be sent back to the App
+    return fileName
   } catch (err) {
     console.log(err)
   }
