@@ -1,6 +1,8 @@
 import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
 
+const SITEMAP_DEFAULT_LOCATION = '/sitemap.xml'
+
 export async function scrapeWebsite({
   urls,
   limit,
@@ -91,9 +93,7 @@ function getSitemapLocations(urls) {
   const sitemapLocations = []
   urls.forEach((url) => {
     const { origin } = new URL(url)
-    SITEMAP_POSSIBLE_LOCATIONS.forEach((location) => {
-      sitemapLocations.push(`${origin}${location}`)
-    })
+    sitemapLocations.push(`${origin}${SITEMAP_DEFAULT_LOCATION}`)
   })
 
   return sitemapLocations
@@ -128,13 +128,3 @@ export async function fetchLinks(url) {
 
   return links
 }
-
-// Sitemap possible locations
-const SITEMAP_POSSIBLE_LOCATIONS = [
-  '/sitemap.xml',
-  '/sitemap-index.xml',
-  '/sitemap_index.xml',
-  '/sitemapindex.xml',
-  '/sitemap/index.xml',
-  '/sitemap/sitemap.xml',
-]
