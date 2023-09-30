@@ -32,16 +32,23 @@ app.post('/', async (req, res) => {
     message: `Scraping started on: ${urls}`,
   })
 
-  const scrapingResult = await scrapeWebsite(payload)
+  try {
+    const scrapingResult = await scrapeWebsite(payload)
 
-  const response = await fetch(EMBEDI_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Custom-Secret': process.env.EMBEDDING_SECRET,
-    },
-    body: JSON.stringify(scrapingResult),
-  })
+    const response = await fetch(EMBEDI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Secret': process.env.EMBEDDING_SECRET,
+      },
+      body: JSON.stringify(scrapingResult),
+    })
+
+    console.log(EMBEDI_API_URL)
+    console.log(await response.json())
+  } catch (e) {
+    console.log(e)
+  }
 })
 
 app.get('/links', async (req, res) => {

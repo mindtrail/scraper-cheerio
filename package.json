@@ -11,6 +11,9 @@
     "express": "^4.18.2"
   },
   "nodemonConfig": {
+    "env": {
+      "NODE_ENV": "development"
+    },
     "ignore": [
       "**/test/**",
       "**/docs/**",

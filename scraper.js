@@ -4,6 +4,8 @@ import { storeToGCS } from './storage.js'
 const SITEMAP_DEFAULT_LOCATION = '/sitemap.xml'
 const bucketName = process.env.GCLOUD_STORAGE_BUCKET
 
+const MAX_LIMIT = 9999
+
 export async function scrapeWebsite({
   urls,
   limit,
@@ -11,7 +13,7 @@ export async function scrapeWebsite({
   userId,
   autoDetectSitemap = true,
 }) {
-  const reqLimit = parseInt(limit) || 9999
+  const reqLimit = parseInt(limit) || MAX_LIMIT
   let scrapingIndex = 0
 
   const scrapingResult = {
@@ -37,7 +39,7 @@ export async function scrapeWebsite({
         const { url: requestUrl } = request
 
         // Even if the crawler reaches the reqeust limit, it still processes queued request.
-        if (scrapingIndex > reqLimit) {
+        if (scrapingIndex >= reqLimit) {
           return
         }
         scrapingIndex++
@@ -46,7 +48,7 @@ export async function scrapeWebsite({
           console.log('--->', requestUrl)
         }
 
-        const pageTitle = $('title').text()
+        const pageTitle = $('head title').text()
         const metaDescription = $('meta[name="description"]').attr('content')
 
         const content = $('html').html()
@@ -86,7 +88,7 @@ export async function scrapeWebsite({
 
   await crawler.addRequests(urls)
 
-  if (autoDetectSitemap) {
+  if (autoDetectSitemap && reqLimit === MAX_LIMIT) {
     const sitemapLocations = getSitemapLocations(urls)
     await crawler.addRequests(sitemapLocations)
   }
