@@ -35,14 +35,7 @@ app.post('/', async (req, res) => {
   try {
     const scrapingResult = await scrapeWebsite(payload)
 
-    const response = await fetch(EMBEDI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Custom-Secret': process.env.EMBEDDING_SECRET,
-      },
-      body: JSON.stringify(scrapingResult),
-    })
+    callEmbedingService(scrapingResult)
 
     console.log(EMBEDI_API_URL)
     console.log(await response.json())
@@ -72,3 +65,14 @@ app.listen(PORT, () => {
   // get actual app url
   console.log(`Running on port:${PORT}`)
 })
+
+async function callEmbedingService(scrapingResult) {
+  return await fetch(EMBEDI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Custom-Secret': process.env.EMBEDDING_SECRET,
+    },
+    body: JSON.stringify(scrapingResult),
+  })
+}
