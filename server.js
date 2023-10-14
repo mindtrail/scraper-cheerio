@@ -38,7 +38,7 @@ app.post('/', async (req, res) => {
     const response = callEmbedingService(scrapingResult)
 
     console.log(EMBEDI_API_URL)
-    console.log(await response.json())
+    // console.log(await response.json())
   } catch (e) {
     console.log(e)
   }
