@@ -35,10 +35,7 @@ app.post('/', async (req, res) => {
   try {
     const scrapingResult = await scrapeWebsite(payload)
 
-    const response = callEmbedingService(scrapingResult)
-
-    console.log(EMBEDI_API_URL)
-    // console.log(await response.json())
+    callEmbedingService(scrapingResult)
   } catch (e) {
     console.log(e)
   }
