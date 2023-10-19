@@ -45,7 +45,7 @@ export async function scrapeWebsite({
         scrapingIndex++
 
         if (scrapingIndex % 20 === 0) {
-          console.log('--->', requestUrl)
+          console.log('--- >', requestUrl)
         }
 
         const pageTitle = $('head title').text()
