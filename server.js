@@ -13,6 +13,7 @@ const EMBEDI_API_URL =
 
 const PORT = 80
 const app = express()
+
 app.use(bodyParser.json())
 
 app.post('/', async (req, res) => {
