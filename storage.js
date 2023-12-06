@@ -16,25 +16,25 @@ export async function storeToGCS(props) {
     return
   }
 
-  const url = new URL(requestUrl)
-  const hostname = url.hostname
-  let pathname = url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
-  pathname = pathname.endsWith('-') ? pathname.slice(0, -1) : pathname
-
-  if (!hostname) {
-    return
-  }
-
-  const fileName = `${userId}/${hostname}/${pathname}`
-  const newFile = bucket.file(fileName)
+  console.log('Storing to GCS', requestUrl)
 
   try {
+    const url = new URL(requestUrl)
+    const hostname = url.hostname
+    let pathname = url.pathname.substring(1).replace(/\s+|\//g, '-') || 'index'
+    pathname = pathname.endsWith('-') ? pathname.slice(0, -1) : pathname
+
+    if (!hostname) {
+      return
+    }
+
+    const fileName = `${userId}/${hostname}/${pathname}`
+    const newFile = bucket.file(fileName)
+
     await newFile.save(content)
     await newFile.setMetadata({
       contentType: 'text/html',
       metadata: {
-        hostname,
-        userId,
         ...rest,
       },
     })
@@ -43,5 +43,6 @@ export async function storeToGCS(props) {
     return fileName
   } catch (err) {
     console.log(err)
+    return null
   }
 }

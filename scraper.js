@@ -60,14 +60,18 @@ export async function scrapeWebsite({
           image,
           title,
           url,
+          userId,
         }
 
         if (content) {
           const fileName = await storeToGCS(payload)
-          scrapingResult.files.push({
-            fileName,
-            metadata: payload,
-          })
+
+          if (fileName) {
+            scrapingResult.files.push({
+              fileName,
+              metadata: payload,
+            })
+          }
         }
 
         await enqueueLinks({
