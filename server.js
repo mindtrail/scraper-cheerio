@@ -68,7 +68,7 @@ async function createDataSources(scrapingResult) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Custom-Secret': process.env.EMBEDDING_SECRET,
+      'X-Custom-Secret': process.env.SECRET,
     },
     body: JSON.stringify(scrapingResult),
   })
