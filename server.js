@@ -20,8 +20,6 @@ app.post('/', async (req, res) => {
   const payload = await req.body
   const { urls } = payload
 
-  console.log('Payload', payload)
-
   if (!urls?.length) {
     console.log('Missing urls', urls)
     return res.status(400).json({
@@ -36,6 +34,7 @@ app.post('/', async (req, res) => {
   try {
     const scrapingResult = await scrapeWebsite(payload)
 
+    console.log('---- Result to Embed ---- ', scrapingResult)
     callEmbedingService(scrapingResult)
   } catch (e) {
     console.log(e)

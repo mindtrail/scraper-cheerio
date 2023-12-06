@@ -10,9 +10,9 @@ const storage = new Storage()
 const bucket = storage.bucket(bucketName)
 
 export async function storeToGCS(props) {
-  const { content, userId, dataStoreId, requestUrl, ...rest } = props
+  const { content, userId, url: requestUrl, ...rest } = props
 
-  if (!content || !userId || !dataStoreId || !requestUrl) {
+  if (!content || !userId || !requestUrl) {
     return
   }
 
@@ -25,7 +25,7 @@ export async function storeToGCS(props) {
     return
   }
 
-  const fileName = `${userId}/${dataStoreId}/${hostname}/${pathname}`
+  const fileName = `${userId}/${hostname}/${pathname}`
   const newFile = bucket.file(fileName)
 
   try {
@@ -35,7 +35,6 @@ export async function storeToGCS(props) {
       metadata: {
         hostname,
         userId,
-        dataStoreId,
         ...rest,
       },
     })

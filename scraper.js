@@ -9,7 +9,7 @@ const MAX_LIMIT = 9999
 export async function scrapeWebsite({
   urls,
   limit,
-  dataStoreId,
+  collectionId,
   userId,
   autoDetectSitemap = true,
 }) {
@@ -19,7 +19,7 @@ export async function scrapeWebsite({
   const scrapingResult = {
     bucket: bucketName,
     userId,
-    dataStoreId,
+    collectionId,
     files: [],
   }
 
@@ -36,7 +36,7 @@ export async function scrapeWebsite({
       maxRequestRetries: 1,
       maxRequestsPerCrawl: reqLimit,
       requestHandler: async ({ crawler, request, $, enqueueLinks }) => {
-        const { url: requestUrl } = request
+        const { url } = request
 
         // Even if the crawler reaches the reqeust limit, it still processes queued request.
         if (scrapingIndex >= reqLimit) {
@@ -45,25 +45,29 @@ export async function scrapeWebsite({
         scrapingIndex++
 
         if (scrapingIndex % 20 === 0) {
-          console.log('--- >', requestUrl)
+          console.log('--- >', url)
         }
 
-        const pageTitle = $('head title').text()
-        const metaDescription = $('meta[name="description"]').attr('content')
+        const title = $('head title').text()
+        const description = $('meta[name="description"]').attr('content')
+        const image = $('meta[property="og:image"]').attr('content')
 
         const content = $('html').html()
 
-        if (content) {
-          const fileName = await storeToGCS({
-            content,
-            userId,
-            dataStoreId,
-            requestUrl,
-            pageTitle,
-            metaDescription,
-          })
+        const payload = {
+          content,
+          description,
+          image,
+          title,
+          url,
+        }
 
-          scrapingResult.files.push(fileName)
+        if (content) {
+          const fileName = await storeToGCS(payload)
+          scrapingResult.files.push({
+            fileName,
+            metadata: payload,
+          })
         }
 
         await enqueueLinks({
@@ -71,8 +75,8 @@ export async function scrapeWebsite({
         })
 
         // For sitemaps, we need to extract the links as the crawler doesn't enqueue them automatically
-        if (requestUrl.includes('sitemap')) {
-          const sitemapLinks = await getLinksFromSitemap(requestUrl)
+        if (url.includes('sitemap')) {
+          const sitemapLinks = await getLinksFromSitemap(url)
 
           if (sitemapLinks?.length) {
             console.log('Sitemap links', sitemapLinks)
