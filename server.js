@@ -6,10 +6,10 @@ import { scrapeWebsite, fetchLinks } from './scraper.js'
 
 dotenv.config()
 
-const EMBEDI_API_URL =
+const DATA_SOURCE_URL =
   process.env.NODE_ENV === 'development'
-    ? process.env.LOCAL_EMBEDDING_ENDPOINT
-    : process.env.EMBEDDING_ENDPOINT
+    ? process.env.LOCAL_DATA_SOURCE_URL
+    : process.env.DATA_SOURCE_URL
 
 const PORT = 80
 const app = express()
@@ -35,7 +35,7 @@ app.post('/', async (req, res) => {
     const scrapingResult = await scrapeWebsite(payload)
 
     console.log('---- Result to Embed ---- ', scrapingResult)
-    callEmbedingService(scrapingResult)
+    createDataSources(scrapingResult)
   } catch (e) {
     console.log(e)
   }
@@ -63,8 +63,8 @@ app.listen(PORT, () => {
   console.log(`Running on port:${PORT}`)
 })
 
-async function callEmbedingService(scrapingResult) {
-  return await fetch(EMBEDI_API_URL, {
+async function createDataSources(scrapingResult) {
+  return await fetch(DATA_SOURCE_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
