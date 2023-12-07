@@ -60,11 +60,10 @@ export async function scrapeWebsite({
           image,
           title,
           url,
-          userId,
         }
 
         if (content) {
-          const fileName = await storeToGCS(payload)
+          const fileName = await storeToGCS({ userId, ...payload })
 
           if (fileName) {
             scrapingResult.files.push({
