@@ -17,8 +17,8 @@ const app = express()
 app.use(bodyParser.json())
 
 app.post('/', async (req, res) => {
-  const payload = await req.body
-  const { urls } = payload
+  const body = await req.body
+  const { urls, userId, collectionId } = body
 
   if (!urls?.length) {
     console.log('Missing urls', urls)
@@ -32,10 +32,16 @@ app.post('/', async (req, res) => {
   })
 
   try {
-    const scrapingResult = await scrapeWebsite(payload)
+    const scrapingResult = await scrapeWebsite(body)
 
-    console.log('---- Result to Embed ---- ', scrapingResult)
-    createDataSources(scrapingResult)
+    const dataSourcesPayload = {
+      userId,
+      collectionId,
+      websites: scrapingResult,
+    }
+
+    console.log('---- Result to Embed ---- ', dataSourcesPayload)
+    createDataSources(dataSourcesPayload)
   } catch (e) {
     console.log(e)
   }

@@ -2,26 +2,18 @@ import { CheerioCrawler, Configuration, downloadListOfUrls } from 'crawlee'
 import { storeToGCS } from './storage.js'
 
 const SITEMAP_DEFAULT_LOCATION = '/sitemap.xml'
-const bucketName = process.env.GCLOUD_STORAGE_BUCKET
-
 const MAX_LIMIT = 9999
 
 export async function scrapeWebsite({
   urls,
   limit,
-  collectionId,
   userId,
   autoDetectSitemap = true,
 }) {
   const reqLimit = parseInt(limit) || MAX_LIMIT
   let scrapingIndex = 0
 
-  const scrapingResult = {
-    bucket: bucketName,
-    userId,
-    collectionId,
-    files: [],
-  }
+  const scrappedWebsites = []
 
   const config = new Configuration({
     // IMPORTANT for running on AWS / EC2 / Gcloud... etc
@@ -52,21 +44,20 @@ export async function scrapeWebsite({
         const description = $('meta[name="description"]').attr('content')
         const image = $('meta[property="og:image"]').attr('content')
 
-        const content = $('html').html()
+        const html = $('html').html()
 
         const payload = {
-          content,
           description,
           image,
           title,
           url,
         }
 
-        if (content) {
-          const fileName = await storeToGCS({ userId, ...payload })
+        if (html) {
+          const fileName = await storeToGCS({ userId, html, ...payload })
 
           if (fileName) {
-            scrapingResult.files.push({
+            scrappedWebsites.push({
               fileName,
               metadata: payload,
             })
@@ -106,7 +97,7 @@ export async function scrapeWebsite({
   await crawler.requestQueue.drop()
   console.timeEnd(`Crawl duration ${urls.join('&')}`)
 
-  return scrapingResult
+  return scrappedWebsites
 }
 
 function getSitemapLocations(urls) {

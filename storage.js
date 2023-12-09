@@ -10,9 +10,9 @@ const storage = new Storage()
 const bucket = storage.bucket(bucketName)
 
 export async function storeToGCS(props) {
-  const { content, userId, url: requestUrl, ...rest } = props
+  const { html, userId, url: requestUrl, ...metadata } = props
 
-  if (!content || !userId || !requestUrl) {
+  if (!html || !userId || !requestUrl) {
     return
   }
 
@@ -31,12 +31,10 @@ export async function storeToGCS(props) {
     const fileName = `${userId}/${hostname}/${pathname}`
     const newFile = bucket.file(fileName)
 
-    await newFile.save(content)
+    await newFile.save(html)
     await newFile.setMetadata({
       contentType: 'text/html',
-      metadata: {
-        ...rest,
-      },
+      metadata,
     })
 
     // We return the file name to be sent back to the App
