@@ -34,17 +34,27 @@ export async function scrapeWebsite({
         if (scrapingIndex >= reqLimit) {
           return
         }
+
         scrapingIndex++
 
         if (scrapingIndex % 20 === 0) {
           console.log('--- >', url)
         }
 
-        const title = $('head title').text()
-        const description = $('meta[name="description"]').attr('content')
-        const image = $('meta[property="og:image"]').attr('content')
+        const title = $('head title')?.text()
+        const description = $('meta[name="description"]')?.attr('content')
+        const image = $('meta[property="og:image"]')?.attr('content')
 
-        const html = $('html').html()
+        const html = $('html')?.html()
+
+        if (!title) {
+          const titleSimple = $('title')?.text()
+
+          if (!titleSimple || titleSimple.includes('404')) {
+            console.log('404 - Not scraping')
+            return
+          }
+        }
 
         const payload = {
           description,
@@ -54,11 +64,11 @@ export async function scrapeWebsite({
         }
 
         if (html) {
-          const fileName = await storeToGCS({ userId, html, ...payload })
+          const fileOnGCS = await storeToGCS({ userId, html, ...payload })
 
-          if (fileName) {
+          if (fileOnGCS) {
             scrappedWebsites.push({
-              fileName,
+              fileName: fileOnGCS,
               metadata: payload,
             })
           }
@@ -77,8 +87,6 @@ export async function scrapeWebsite({
             await crawler.addRequests(sitemapLinks)
           }
         }
-
-        return content
       },
     },
     config,

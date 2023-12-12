@@ -34,6 +34,11 @@ app.post('/', async (req, res) => {
   try {
     const scrapingResult = await scrapeWebsite(body)
 
+    if (!scrapingResult?.length) {
+      console.log('No scraping result')
+      return
+    }
+
     const dataSourcesPayload = {
       userId,
       collectionId,
