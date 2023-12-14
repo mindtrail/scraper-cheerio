@@ -34,7 +34,10 @@ export async function storeToGCS(props) {
     await newFile.save(html)
     await newFile.setMetadata({
       contentType: 'text/html',
-      metadata,
+      metadata: {
+        ...metadata,
+        url: requestUrl,
+      },
     })
 
     // We return the file name to be sent back to the App
