@@ -68,7 +68,7 @@ export async function scrapeWebsite({
 
           if (fileOnGCS) {
             scrappedWebsites.push({
-              fileName: fileOnGCS,
+              name: fileOnGCS,
               metadata: payload,
             })
           }

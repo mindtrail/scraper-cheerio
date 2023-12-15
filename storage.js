@@ -28,8 +28,8 @@ export async function storeToGCS(props) {
       return
     }
 
-    const fileName = `${userId}/${hostname}/${pathname}`
-    const newFile = bucket.file(fileName)
+    const gcFile = `${userId}/${hostname}/${pathname}`
+    const newFile = bucket.file(gcFile)
 
     await newFile.save(html)
     await newFile.setMetadata({
@@ -41,7 +41,7 @@ export async function storeToGCS(props) {
     })
 
     // We return the file name to be sent back to the App
-    return fileName
+    return gcFile
   } catch (err) {
     console.log(err)
     return null
