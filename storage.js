@@ -28,7 +28,7 @@ export async function storeToGCS(props) {
       return
     }
 
-    const gcFileName = `${userId}/${hostname}/${pathname}`
+    const gcFileName = `${userId}/websites/${hostname}/${pathname}`
     const newFile = bucket.file(gcFileName)
 
     await newFile.save(html)
