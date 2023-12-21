@@ -43,8 +43,17 @@ export async function scrapeWebsite({
 
         const title = $('head title')?.text()
         const description = $('meta[name="description"]')?.attr('content')
-        const image = $('meta[property="og:image"]')?.attr('content')
+        let image = $('meta[property="og:image"]')?.attr('content')
 
+        // The image may be a relative path, so we need to make it absolute
+        if (image && !image.startsWith('http')) {
+          try {
+            const { origin } = new URL(url)
+            image = `${origin}/${image}`
+          } catch (err) {
+            console.log(err)
+          }
+        }
         const html = $('html')?.html()
 
         if (!title) {
