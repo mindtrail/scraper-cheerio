@@ -72,9 +72,11 @@ export async function scrapeWebsite({
           url,
         }
 
+
         if (html) {
           const fileOnGCS = await storeToGCS({ userId, html, ...payload })
 
+          console.log(payload.url, fileOnGCS)
           if (fileOnGCS) {
             scrappedWebsites.push({
               name: fileOnGCS,
