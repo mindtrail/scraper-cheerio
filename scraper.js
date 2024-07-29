@@ -4,13 +4,8 @@ import { storeToGCS } from './storage.js'
 const SITEMAP_DEFAULT_LOCATION = '/sitemap.xml'
 const MAX_LIMIT = 9999
 
-export async function scrapeWebsite({
-  urls,
-  limit,
-  userId,
-  autoDetectSitemap = true,
-}) {
-  const reqLimit = parseInt(limit) || MAX_LIMIT
+export async function scrapeWebsite({ urls, limit, userId, autoDetectSitemap = true }) {
+  const reqLimit = 5 || MAX_LIMIT
   let scrapingIndex = 0
 
   const scrappedWebsites = []
@@ -72,7 +67,6 @@ export async function scrapeWebsite({
           url,
         }
 
-
         if (html) {
           const fileOnGCS = await storeToGCS({ userId, html, ...payload })
 
@@ -100,7 +94,7 @@ export async function scrapeWebsite({
         }
       },
     },
-    config,
+    config
   )
 
   await crawler.addRequests(urls)
@@ -133,7 +127,7 @@ async function getLinksFromSitemap(url) {
   const { hostname } = new URL(url)
 
   const links = (await downloadListOfUrls({ url })).filter((link) =>
-    link.includes(hostname),
+    link.includes(hostname)
   )
   return links
 }
@@ -153,7 +147,7 @@ function generateRandomID(length) {
 export async function fetchLinks(url) {
   const hostname = new URL(url).hostname
   const links = (await downloadListOfUrls({ url })).filter((link) =>
-    link.includes(hostname),
+    link.includes(hostname)
   )
 
   return links
